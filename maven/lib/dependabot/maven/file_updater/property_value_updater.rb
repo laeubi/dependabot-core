@@ -95,9 +95,11 @@ module Dependabot
 
         sig { params(file: DependencyFile, property_name: String, updated_value: String).returns(String) }
         def update_maven_config_property(file, property_name, updated_value)
+          property_regex = /^-D#{Regexp.escape(property_name)}=.+$/
           updated_lines = T.must(file.content).lines.map do |line|
-            if /^-D#{Regexp.escape(property_name)}=.+$/.match?(line)
-              "-D#{property_name}=#{updated_value}\n"
+            if property_regex.match?(line)
+              line_ending = line.end_with?("\r\n") ? "\r\n" : "\n"
+              "-D#{property_name}=#{updated_value}#{line_ending}"
             else
               line
             end

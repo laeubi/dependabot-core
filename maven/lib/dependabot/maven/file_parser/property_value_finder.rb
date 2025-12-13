@@ -116,10 +116,11 @@ module Dependabot
             next if line.empty? || line.start_with?("#")
 
             # Match -Dkey=value pattern
-            next unless line =~ /^-D([^=]+)=(.+)$/
+            match = line.match(/\A-D([^=]+)=(.+)\z/)
+            next unless match
 
-            key = Regexp.last_match(1)
-            value = Regexp.last_match(2)
+            key = match[1]
+            value = match[2]
 
             if key == property_name
               # Return a hash similar to what property_details returns
