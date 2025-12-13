@@ -40,6 +40,7 @@ module Dependabot
         sig do
           params(property_name: String, callsite_pom: DependencyFile).returns(T.nilable(T::Hash[Symbol, T.untyped]))
         end
+        # rubocop:disable Metrics/PerceivedComplexity
         def property_details(property_name:, callsite_pom:)
           # First check maven.config for the property
           maven_config_property = property_from_maven_config(property_name, callsite_pom)
@@ -87,6 +88,7 @@ module Dependabot
             callsite_pom: parent
           )
         end
+        # rubocop:enable Metrics/PerceivedComplexity
 
         private
 
@@ -100,11 +102,11 @@ module Dependabot
           # Find the maven.config file in the same directory or parent directories
           pom_dir = File.dirname(callsite_pom.name)
           config_path = File.join(pom_dir, ".mvn/maven.config")
-          
+
           # Try the pom's directory first, then try the root
           maven_config_file = dependency_files.find { |f| f.name == config_path }
           maven_config_file ||= dependency_files.find { |f| f.name == ".mvn/maven.config" }
-          
+
           return unless maven_config_file
 
           # Parse the maven.config file for -Dkey=value properties
@@ -112,21 +114,21 @@ module Dependabot
             line = line.strip
             # Skip comments and empty lines
             next if line.empty? || line.start_with?("#")
-            
+
             # Match -Dkey=value pattern
-            if line =~ /^-D([^=]+)=(.+)$/
-              key = Regexp.last_match(1)
-              value = Regexp.last_match(2)
-              
-              if key == property_name
-                # Return a hash similar to what property_details returns
-                # We use a special marker to indicate this came from maven.config
-                return {
-                  file: maven_config_file.name,
-                  value: value,
-                  node: nil
-                }
-              end
+            next unless line =~ /^-D([^=]+)=(.+)$/
+
+            key = Regexp.last_match(1)
+            value = Regexp.last_match(2)
+
+            if key == property_name
+              # Return a hash similar to what property_details returns
+              # We use a special marker to indicate this came from maven.config
+              return {
+                file: maven_config_file.name,
+                value: value,
+                node: nil
+              }
             end
           end
 

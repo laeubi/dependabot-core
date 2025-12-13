@@ -37,29 +37,29 @@ module Dependabot
           filename = declaration_details&.fetch(:file)
 
           file_to_update = dependency_files.find { |f| f.name == filename }
-          
+
           # Check if this is a maven.config file
-          if T.must(filename).end_with?("maven.config")
+          if filename&.end_with?("maven.config")
             updated_content = update_maven_config_property(
               T.must(file_to_update),
               property_name,
               updated_value
             )
           else
-            property_re = %r{<#{Regexp.quote(T.must(node).name)}>
-              \s*#{Regexp.quote(T.must(node).content)}\s*
-              </#{Regexp.quote(T.must(node).name)}>}xm
-            property_text = T.must(node).to_s
+            property_re = %r{<#{Regexp.quote(node.name)}>
+              \s*#{Regexp.quote(node.content)}\s*
+              </#{Regexp.quote(node.name)}>}xm
+            property_text = node.to_s
             if file_to_update&.content&.match?(property_re)
               updated_content = file_to_update&.content&.sub(
                 property_re,
-                "<#{T.must(node).name}>#{updated_value}</#{T.must(node).name}>"
+                "<#{node.name}>#{updated_value}</#{node.name}>"
               )
             elsif file_to_update&.content&.include? property_text
-              T.must(node).content = updated_value
+              node.content = updated_value
               updated_content = file_to_update&.content&.sub(
                 property_text,
-                T.must(node).to_s
+                node.to_s
               )
             end
           end
@@ -96,7 +96,7 @@ module Dependabot
         sig { params(file: DependencyFile, property_name: String, updated_value: String).returns(String) }
         def update_maven_config_property(file, property_name, updated_value)
           updated_lines = T.must(file.content).lines.map do |line|
-            if line =~ /^-D#{Regexp.escape(property_name)}=.+$/
+            if /^-D#{Regexp.escape(property_name)}=.+$/.match?(line)
               "-D#{property_name}=#{updated_value}\n"
             else
               line
