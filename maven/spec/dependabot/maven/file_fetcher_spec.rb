@@ -156,6 +156,36 @@ RSpec.describe Dependabot::Maven::FileFetcher do
           .to match_array(%w(pom.xml .mvn/extensions.xml))
       end
     end
+
+    context "with maven.config" do
+      before do
+        stub_request(:get, File.join(url, ".mvn?ref=sha"))
+          .with(headers: { "Authorization" => "token token" })
+          .to_return(
+            status: 200,
+            body: fixture("github", "contents_mvn_directory.json"),
+            headers: { "content-type" => "application/json" }
+          )
+        stub_request(:get, File.join(url, ".mvn/maven.config?ref=sha"))
+          .with(headers: { "Authorization" => "token token" })
+          .to_return(
+            status: 200,
+            body: fixture("github", "contents_maven_config.json"),
+            headers: { "content-type" => "application/json" }
+          )
+        stub_request(:get, File.join(url, ".mvn/extensions.xml?ref=sha"))
+          .with(headers: { "Authorization" => "token token" })
+          .to_return(
+            status: 404
+          )
+      end
+
+      it "fetches the pom.xml and maven.config" do
+        expect(file_fetcher_instance.files.count).to eq(2)
+        expect(file_fetcher_instance.files.map(&:name))
+          .to match_array(%w(pom.xml .mvn/maven.config))
+      end
+    end
   end
 
   context "with a multimodule pom" do

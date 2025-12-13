@@ -36,27 +36,37 @@ module Dependabot
           node = declaration_details&.fetch(:node)
           filename = declaration_details&.fetch(:file)
 
-          pom_to_update = dependency_files.find { |f| f.name == filename }
-          property_re = %r{<#{Regexp.quote(node.name)}>
-            \s*#{Regexp.quote(node.content)}\s*
-            </#{Regexp.quote(node.name)}>}xm
-          property_text = node.to_s
-          if pom_to_update&.content&.match?(property_re)
-            updated_content = pom_to_update&.content&.sub(
-              property_re,
-              "<#{node.name}>#{updated_value}</#{node.name}>"
+          file_to_update = dependency_files.find { |f| f.name == filename }
+          
+          # Check if this is a maven.config file
+          if T.must(filename).end_with?("maven.config")
+            updated_content = update_maven_config_property(
+              T.must(file_to_update),
+              property_name,
+              updated_value
             )
-          elsif pom_to_update&.content&.include? property_text
-            node.content = updated_value
-            updated_content = pom_to_update&.content&.sub(
-              property_text,
-              node.to_s
-            )
+          else
+            property_re = %r{<#{Regexp.quote(T.must(node).name)}>
+              \s*#{Regexp.quote(T.must(node).content)}\s*
+              </#{Regexp.quote(T.must(node).name)}>}xm
+            property_text = T.must(node).to_s
+            if file_to_update&.content&.match?(property_re)
+              updated_content = file_to_update&.content&.sub(
+                property_re,
+                "<#{T.must(node).name}>#{updated_value}</#{T.must(node).name}>"
+              )
+            elsif file_to_update&.content&.include? property_text
+              T.must(node).content = updated_value
+              updated_content = file_to_update&.content&.sub(
+                property_text,
+                T.must(node).to_s
+              )
+            end
           end
 
           updated_pomfiles = dependency_files.dup
-          updated_pomfiles[T.must(updated_pomfiles.index(pom_to_update))] =
-            update_file(file: T.must(pom_to_update), content: T.must(updated_content))
+          updated_pomfiles[T.must(updated_pomfiles.index(file_to_update))] =
+            update_file(file: T.must(file_to_update), content: T.must(updated_content))
 
           updated_pomfiles
         end
@@ -81,6 +91,18 @@ module Dependabot
           updated_file = file.dup
           updated_file.content = content
           updated_file
+        end
+
+        sig { params(file: DependencyFile, property_name: String, updated_value: String).returns(String) }
+        def update_maven_config_property(file, property_name, updated_value)
+          updated_lines = T.must(file.content).lines.map do |line|
+            if line =~ /^-D#{Regexp.escape(property_name)}=.+$/
+              "-D#{property_name}=#{updated_value}\n"
+            else
+              line
+            end
+          end
+          updated_lines.join
         end
       end
     end
