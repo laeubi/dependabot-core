@@ -163,7 +163,7 @@ RSpec.describe Dependabot::Maven::FileFetcher do
           .with(headers: { "Authorization" => "token token" })
           .to_return(
             status: 200,
-            body: fixture("github", "contents_mvn_directory.json"),
+            body: fixture("github", "contents_mvn_directory_maven_config_only.json"),
             headers: { "content-type" => "application/json" }
           )
         stub_request(:get, File.join(url, ".mvn/maven.config?ref=sha"))
@@ -172,11 +172,6 @@ RSpec.describe Dependabot::Maven::FileFetcher do
             status: 200,
             body: fixture("github", "contents_maven_config.json"),
             headers: { "content-type" => "application/json" }
-          )
-        stub_request(:get, File.join(url, ".mvn/extensions.xml?ref=sha"))
-          .with(headers: { "Authorization" => "token token" })
-          .to_return(
-            status: 404
           )
       end
 

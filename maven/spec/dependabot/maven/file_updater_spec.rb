@@ -881,7 +881,7 @@ RSpec.describe Dependabot::Maven::FileUpdater do
               version: "5.0.0.RELEASE",
               requirements: [{
                 file: "pom.xml",
-                requirement: "${springframework.version}",
+                requirement: "5.0.0.RELEASE",
                 groups: [],
                 source: nil,
                 metadata: {
@@ -892,7 +892,7 @@ RSpec.describe Dependabot::Maven::FileUpdater do
               }],
               previous_requirements: [{
                 file: "pom.xml",
-                requirement: "${springframework.version}",
+                requirement: "4.3.12.RELEASE",
                 groups: [],
                 source: nil,
                 metadata: {

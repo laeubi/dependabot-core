@@ -169,7 +169,7 @@ RSpec.describe Dependabot::Maven::FileParser do
           expect(dependency.version).to eq("4.3.12.RELEASE")
           expect(dependency.requirements).to eq(
             [{
-              requirement: "${springframework.version}",
+              requirement: "4.3.12.RELEASE",
               file: "pom.xml",
               groups: [],
               source: nil,
